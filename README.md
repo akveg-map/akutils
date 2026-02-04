@@ -1,12 +1,12 @@
 # AKutils
 
-AKutils is a Python package that contains functions to aid geospatial data development for Alaska.
+AKUTILS is a Python package that contains functions to aid in the development of the AKVEG Map.
 
 *Author*: Timm Nawrocki, Alaska Center for Conservation Science, University of Alaska Anchorage
 
 *Created On*: 2023-10-10
 
-*Last Updated*: 2024-04-04
+*Last Updated*: 2026-02-03
 
 *Description*: Functions for data acquisition, data manipulation, statistical modeling, results post-processing, and accuracy assessment for geospatial data development in Alaska.
 
