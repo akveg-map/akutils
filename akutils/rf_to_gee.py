@@ -13,10 +13,18 @@ def rf_to_gee_strings(model, feature_names, model_type):
     This optimized version avoids slow DataFrame manipulations and uses direct
     tree traversal for much better performance with large models.
     """
+
+    # Import packages
+    import numpy as np
+    from sklearn.tree import _tree
+
+    # Define string placeholder
     strings = []
+    is_regressor = model_type == 'regressor'
+
+    # Iterate through trees to compile tree string
     for tree in model.estimators_:
         tree_ = tree.tree_
-        is_regressor = model_type == 'regressor'
 
         # First pass: Get GEE node numbers using a level-order traversal
         node_to_cnt = {0: 1}
@@ -28,10 +36,13 @@ def rf_to_gee_strings(model, feature_names, model_type):
             if tree_.feature[current_node] != _tree.TREE_UNDEFINED:
                 left_child = tree_.children_left[current_node]
                 right_child = tree_.children_right[current_node]
+
                 left_cnt = current_cnt * 2
                 right_cnt = current_cnt * 2 + 1
+
                 node_to_cnt[left_child] = left_cnt
                 node_to_cnt[right_child] = right_cnt
+
                 queue.append((left_child, left_cnt))
                 queue.append((right_child, right_cnt))
 
@@ -41,72 +52,51 @@ def rf_to_gee_strings(model, feature_names, model_type):
         # Add root line
         root_impurity = tree_.impurity[0]
         root_samples = tree_.n_node_samples[0]
-        tree_string_parts.append(f"1) root {root_samples} 9999 9999 ({root_impurity})\n")
+        tree_string_parts.append(f"1) root {root_samples} 9999 9999 ({root_impurity:.4f})\n")
 
         def recurse(node_id, depth):
             """Recursive helper to build the string for each node."""
             if tree_.feature[node_id] == _tree.TREE_UNDEFINED:
                 return
 
-            # --- Left Branch ---
-            left_child_id = tree_.children_left[node_id]
-            sign = "<="
-
-            # Get node properties
+            # The splitting criteria belong to the parent
             feature_name = feature_names[tree_.feature[node_id]]
             threshold = tree_.threshold[node_id]
-            n_samples = tree_.n_node_samples[node_id]
-            impurity = tree_.impurity[node_id]
-            cnt = node_to_cnt.get(left_child_id, 0)
             indent = "  " * depth
 
-            # Determine value and tail
-            is_leaf = tree_.feature[left_child_id] == _tree.TREE_UNDEFINED
-            if is_leaf:
-                if is_regressor:
-                    value = tree_.value[left_child_id][0][0]
-                else:
-                    value = tree_.value[left_child_id][0][1] / np.sum(tree_.value[left_child_id][0]) if np.sum(
-                        tree_.value[left_child_id][0]) > 0 else 0
-                tail = " *\n"
-            else:  # Not a leaf, use parent's value
-                if is_regressor:
-                    value = tree_.value[node_id][0][0]
-                else:
-                    value = tree_.value[node_id][0][1] / np.sum(tree_.value[node_id][0]) if np.sum(
-                        tree_.value[node_id][0]) > 0 else 0
-                tail = "\n"
+            # Evaluate both children in a loop (Left, then Right)
+            children = [
+                (tree_.children_left[node_id], "<="),
+                (tree_.children_right[node_id], ">")
+            ]
 
-            tree_string_parts.append(
-                f"{indent}{cnt}) {feature_name} {sign} {threshold:.6f} {n_samples} {impurity:.4f} {value:.6f}{tail}")
-            if not is_leaf:
-                recurse(left_child_id, depth + 1)
+            for child_id, sign in children:
+                cnt = node_to_cnt.get(child_id, 0)
 
-            # --- Right Branch ---
-            right_child_id = tree_.children_right[node_id]
-            sign = ">"
-            cnt = node_to_cnt.get(right_child_id, 0)
+                # Properties below belong to the child
+                n_samples = tree_.n_node_samples[child_id]
+                impurity = tree_.impurity[child_id]
+                is_leaf = tree_.feature[child_id] == _tree.TREE_UNDEFINED
 
-            is_leaf = tree_.feature[right_child_id] == _tree.TREE_UNDEFINED
-            if is_leaf:
+                # Determine value
                 if is_regressor:
-                    value = tree_.value[right_child_id][0][0]
+                    value = tree_.value[child_id][0][0]
                 else:
-                    value = tree_.value[right_child_id][0][1] / np.sum(tree_.value[right_child_id][0]) if np.sum(
-                        tree_.value[right_child_id][0]) > 0 else 0
-                tail = " *\n"
-            else:  # Not a leaf, use parent's value
-                if is_regressor:
-                    value = tree_.value[node_id][0][0]
-                else:
-                    value = tree_.value[node_id][0][1] / np.sum(tree_.value[node_id][0]) if np.sum(
-                        tree_.value[node_id][0]) > 0 else 0
-                tail = "\n"
+                    # Note: This specifically outputs the probability of class index 1.
+                    # For standard classification (outputting the class label),
+                    # you would use: value = np.argmax(tree_.value[child_id][0])
+                    node_values = tree_.value[child_id][0]
+                    value = node_values[1] / np.sum(node_values) if np.sum(node_values) > 0 else 0
 
-            tree_string_parts.append(
-                f"{indent}{cnt}) {feature_name} {sign} {threshold:.6f} {n_samples} {impurity:.4f} {value:.6f}{tail}")
-            if not is_leaf:
-                recurse(right_child_id, depth + 1)
+                tail = " *\n" if is_leaf else "\n"
+
+                tree_string_parts.append(
+                    f"{indent}{cnt}) {feature_name} {sign} {threshold:.6f} {n_samples} {impurity:.4f} {value:.6f}{tail}"
+                )
+
+                # Recurse if it's not a leaf
+                if not is_leaf:
+                    recurse(child_id, depth + 1)
 
         recurse(0, 1)
         strings.append("".join(tree_string_parts))
