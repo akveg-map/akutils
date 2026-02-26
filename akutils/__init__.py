@@ -28,3 +28,4 @@ from .optimization_lgbm import optimize_lgbmregressor
 from .query_to_dataframe import query_to_dataframe
 from .raster_block_progress import raster_block_progress
 from .raster_bounds import raster_bounds
+from .rf_to_gee import rf_to_gee_strings

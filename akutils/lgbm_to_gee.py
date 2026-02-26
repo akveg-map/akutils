@@ -1,15 +1,11 @@
 # -*- coding: utf-8 -*-
 # ---------------------------------------------------------------------------
 # LightGBM to GEE
-# Author: Timm Nawrocki, Matt Macander
+# Author: Matt Macander, Timm Nawrocki
 # Last Updated: 2025-10-02
 # Usage: Must be executed in an Anaconda Python 3.12+ distribution.
 # Description: "LightGBM to GEE" is a set of functions to convert LightGBM model boosters to GEE-compatible tree strings.
 # ---------------------------------------------------------------------------
-
-# Import packages
-import numpy as np
-import pandas as pd
 
 def treedf_to_string(df):
     """
@@ -23,7 +19,11 @@ def treedf_to_string(df):
     # so we need to add in right nodes in the correct location
     # we do this by first calculating which nodes are right and then insert them at the correct index
 
-    # get a dict of right node rows and assign key based on index where to insert
+    # Import packages
+    import numpy as np
+    import pandas as pd
+
+    # Get a dict of right node rows and assign key based on index where to insert
     inserts = {}
     for row in df.itertuples():
         child_r = row.children_right
