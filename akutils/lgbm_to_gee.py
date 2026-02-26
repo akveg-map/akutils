@@ -128,6 +128,10 @@ def lgbm_booster_to_tree_df(booster):
     Returned Value: returns a dataframe of all trees in the booster
     Preconditions: requires a trained LightGBM model
     """
+
+    # Import packages
+    import pandas as pd
+
     # Convert classifier or regressor (saved using .booster_.save_model) to parsed data frame
     classifier_df = booster.trees_to_dataframe()
 
