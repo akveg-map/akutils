@@ -349,7 +349,7 @@ def optimize_lgbmclassifier(init_points, n_iter, data, all_variables, predictor_
             'num_leaves': (5, 200),
             'max_depth': (3, 12),
             'learning_rate': (0.001, 0.2),
-            'n_estimators': (50, 100), # UPDATE MAX TO 1000
+            'n_estimators': (50, 1000),
             'min_split_gain': (0.001, 0.1),
             'min_child_weight': (0.001, 1),
             'min_child_samples': (1, 200),
@@ -420,7 +420,7 @@ def optimize_lgbmregressor(init_points, n_iter, data, all_variables, predictor_a
             'num_leaves': (5, 200),
             'max_depth': (3, 12),
             'learning_rate': (0.001, 0.2),
-            'n_estimators': (50, 100), # UPDATE MAX TO 1000
+            'n_estimators': (50, 1000),
             'min_split_gain': (0.001, 0.1),
             'min_child_weight': (0.001, 1),
             'min_child_samples': (1, 200),
