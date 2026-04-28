@@ -38,8 +38,8 @@ def upload_to_gcs(local_path, gcs_uri, storage_client):
     blob = bucket.blob(blob_name)
     # Set chunk size to 5 MB
     blob.chunk_size = 5 * 1024 * 1024
-    # Upload with a 10 minute timeout
-    blob.upload_from_filename(local_path, timeout=600)
+    # Upload with one hour timeout
+    blob.upload_from_filename(local_path, timeout=3600)
 
 # Define a function to generate vsigs paths for tif rasters
 def get_vsi_paths(bucket_name, prefix, storage_client):
