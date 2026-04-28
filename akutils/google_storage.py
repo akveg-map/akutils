@@ -1,3 +1,20 @@
+# Define a function to list all files (optionally of a particular extension) in a Google Storage folder
+def gcs_list_files(gcs_folder, storage_client, extension=''):
+    bucket_name = gcs_folder.split('/')[2]
+    prefix = '/'.join(gcs_folder.split('/')[3:])
+    # Safely ensure the prefix acts as a folder search by appending a trailing slash if missing
+    if prefix and not prefix.endswith('/'):
+        prefix += '/'
+    # List blobs in storage folder
+    bucket = storage_client.bucket(bucket_name)
+    blobs = bucket.list_blobs(prefix=prefix)
+    # Identify the full uri for each matching file
+    if extension == '':
+        file_list = [f'gs://{bucket_name}/{b.name}' for b in blobs if not b.name.endswith('/')]
+    else:
+        file_list = [f'gs://{bucket_name}/{b.name}' for b in blobs if b.name.endswith(extension)]
+    return file_list
+
 # Define function to check if a file exists in GCS
 def gcs_blob_exists(gcs_uri, storage_client):
     bucket_name = gcs_uri.split('/')[2]
