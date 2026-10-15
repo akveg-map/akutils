@@ -1,5 +1,7 @@
 # Define a function to calculate normalized difference indices and scale by 10000
 def calc_normalized_index(b1, b2, nodata=-32768):
+    # Import packages
+    import numpy as np
     # Convert to float32 for math operations
     b1_f = b1.astype(np.float32)
     b2_f = b2.astype(np.float32)
